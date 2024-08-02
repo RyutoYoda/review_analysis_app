@@ -111,8 +111,8 @@ if uploaded_file:
     # 感情分析ボタン
     if st.session_state.embeddings is not None and st.button('感情分析を実行'):
         try:
-            st.session_state.df['sentiment_score'] = st.session_state.df[review_column].astype(str).apply(lambda x: SnowNLP(x).sentiments)
-            st.session_state.df['sentiment'] = st.session_state.df['sentiment_score'].apply(lambda x: 'positive' if x > 0.5 else 'negative')
+            st.session_state.df['sentiment_score'] = st.session_state.df[review_column].astype(str).apply(lambda x: 2 * SnowNLP(x).sentiments - 1)
+            st.session_state.df['sentiment'] = st.session_state.df['sentiment_score'].apply(lambda x: 'positive' if x > 0 else 'negative')
             
             st.write("Sentiment Analysis結果：")
             st.write(st.session_state.df[[review_column, 'sentiment', 'sentiment_score']])
