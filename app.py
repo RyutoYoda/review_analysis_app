@@ -39,6 +39,10 @@ if uploaded_file:
     # 口コミが含まれている列を選択
     review_column = st.selectbox("口コミが含まれている列を選択してください", df.columns)
     
+    # レビュー列以外を切り落とし、レビューIDを追加
+    df = df[[review_column]].dropna()
+    df['review_id'] = df.index
+
     embeddings = None
 
     # 埋め込みベクトルとクラスタリングボタン
@@ -72,7 +76,7 @@ if uploaded_file:
             st.plotly_chart(fig, use_container_width=True)
 
             # 頻出単語ランキング
-            word_list = ' '.join(df[review_column].tolist()).split()
+            word_list = ' '.join(df[review_column].dropna().astype(str).tolist()).split()
             word_freq = Counter(word_list)
             most_common_words = word_freq.most_common(20)
             words, counts = zip(*most_common_words)
