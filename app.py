@@ -25,6 +25,13 @@ st.title('Review Analysis App📊')
 # ファイルアップロード
 uploaded_file = st.file_uploader("ファイルをアップロードしてください", type=["csv", "xlsx"])
 
+# セッション状態を初期化
+if 'embeddings' not in st.session_state:
+    st.session_state.embeddings = None
+
+if 'df' not in st.session_state:
+    st.session_state.df = None
+
 if uploaded_file:
     # ファイルをデータフレームとして読み込む
     if uploaded_file.name.endswith('.csv'):
@@ -38,83 +45,80 @@ if uploaded_file:
     review_column = st.selectbox("口コミが含まれている列を選択してください", df.columns)
     
     # レビュー列以外を切り落とし、レビューIDを追加
-    df = df[[review_column]].dropna()
-    df['review_id'] = df.index
-
-    embeddings = None
+    st.session_state.df = df[[review_column]].dropna()
+    st.session_state.df['review_id'] = st.session_state.df.index
 
     # 埋め込みベクトル生成ボタン
     if st.button('埋め込みベクトルを生成'):
         try:
             with st.spinner('埋め込みベクトルを生成中...'):
                 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-                embeddings = model.encode(df[review_column].astype(str).tolist())
+                st.session_state.embeddings = model.encode(st.session_state.df[review_column].astype(str).tolist())
             
             st.success('埋め込みベクトルの生成が完了しました！')
-
-            # クラスタリング数の選択
-            num_clusters = st.slider("クラスタ数を選択してください", 2, 10, 5)
+            st.session_state.num_clusters = st.slider("クラスタ数を選択してください", 2, 10, 5)
         
         except Exception as e:
             st.error("埋め込みベクトルの生成に失敗しました。")
             st.error(str(e))
     
     # クラスタリングと3次元プロットボタン
-    if embeddings is not None and st.button('クラスタリングと3次元プロットを実行'):
-        try:
-            # クラスタリングを実行
-            kmeans = KMeans(n_clusters=num_clusters, random_state=42)
-            df['cluster'] = kmeans.fit_predict(embeddings)
+    if st.session_state.embeddings is not None:
+        if st.button('クラスタリングと3次元プロットを実行'):
+            try:
+                # クラスタリングを実行
+                kmeans = KMeans(n_clusters=st.session_state.num_clusters, random_state=42)
+                st.session_state.df['cluster'] = kmeans.fit_predict(st.session_state.embeddings)
+                
+                # PCAを使用して3次元に可視化
+                pca = PCA(n_components=3)
+                pca_result = pca.fit_transform(st.session_state.embeddings)
+                st.session_state.df['pca_one'] = pca_result[:, 0]
+                st.session_state.df['pca_two'] = pca_result[:, 1]
+                st.session_state.df['pca_three'] = pca_result[:, 2]
+                
+                # クラスタの色を指定
+                color_sequence = px.colors.qualitative.T10
+                fig = px.scatter_3d(
+                    st.session_state.df, x='pca_one', y='pca_two', z='pca_three',
+                    color='cluster', hover_data=[review_column],
+                    color_discrete_sequence=color_sequence[:st.session_state.num_clusters]
+                )
+                st.plotly_chart(fig, use_container_width=True)
             
-            # PCAを使用して3次元に可視化
-            pca = PCA(n_components=3)
-            pca_result = pca.fit_transform(embeddings)
-            df['pca_one'] = pca_result[:, 0]
-            df['pca_two'] = pca_result[:, 1]
-            df['pca_three'] = pca_result[:, 2]
-            
-            # クラスタの色を指定
-            color_sequence = px.colors.qualitative.T10
-            fig = px.scatter_3d(
-                df, x='pca_one', y='pca_two', z='pca_three',
-                color='cluster', hover_data=[review_column],
-                color_discrete_sequence=color_sequence[:num_clusters]
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
-        except Exception as e:
-            st.error("クラスタリングとプロットに失敗しました。")
-            st.error(str(e))
+            except Exception as e:
+                st.error("クラスタリングとプロットに失敗しました。")
+                st.error(str(e))
     
     # 感情分析ボタン
-    if embeddings is not None and st.button('感情分析を実行'):
+    if st.session_state.embeddings is not None and st.button('感情分析を実行'):
         try:
             analyzer = SentimentIntensityAnalyzer()
-            df['sentiment_score'] = df[review_column].astype(str).apply(lambda x: analyzer.polarity_scores(x)['compound'] * 5)
-            df['sentiment'] = df['sentiment_score'].apply(lambda x: 'positive' if x > 0 else 'negative')
+            st.session_state.df['sentiment_score'] = st.session_state.df[review_column].astype(str).apply(lambda x: analyzer.polarity_scores(x)['compound'] * 5)
+            st.session_state.df['sentiment'] = st.session_state.df['sentiment_score'].apply(lambda x: 'positive' if x > 0 else 'negative')
             
             st.write("Sentiment Analysis結果：")
-            st.write(df[[review_column, 'sentiment', 'sentiment_score']])
+            st.write(st.session_state.df[[review_column, 'sentiment', 'sentiment_score']])
             
             # ベクトル数値を列として追加
-            for i in range(embeddings.shape[1]):
-                df[f'vector_{i}'] = embeddings[:, i]
+            for i in range(st.session_state.embeddings.shape[1]):
+                st.session_state.df[f'vector_{i}'] = st.session_state.embeddings[:, i]
             
             # 追加した列を表示
             st.write("更新されたデータフレーム：")
-            st.write(df)
+            st.write(st.session_state.df)
         
         except Exception as e:
             st.error("感情分析中にエラーが発生しました。")
             st.error(str(e))
 
     # データをダウンロードするためのリンクを作成
-    if st.button('データをCSVとしてダウンロード'):
+    if st.session_state.embeddings is not None and st.button('データをCSVとしてダウンロード'):
         try:
             def convert_df_to_csv(df):
                 return df.to_csv(index=False).encode('utf-8')
 
-            csv = convert_df_to_csv(df)
+            csv = convert_df_to_csv(st.session_state.df)
             st.download_button(
                 label="データをCSVとしてダウンロード",
                 data=csv,
