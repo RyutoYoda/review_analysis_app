@@ -32,6 +32,9 @@ if 'embeddings' not in st.session_state:
 if 'df' not in st.session_state:
     st.session_state.df = None
 
+if 'num_clusters' not in st.session_state:
+    st.session_state.num_clusters = 5
+
 if uploaded_file:
     # ファイルをデータフレームとして読み込む
     if uploaded_file.name.endswith('.csv'):
@@ -56,11 +59,13 @@ if uploaded_file:
                 st.session_state.embeddings = model.encode(st.session_state.df[review_column].astype(str).tolist())
             
             st.success('埋め込みベクトルの生成が完了しました！')
-            st.session_state.num_clusters = st.slider("クラスタ数を選択してください", 2, 10, 5)
         
         except Exception as e:
             st.error("埋め込みベクトルの生成に失敗しました。")
             st.error(str(e))
+
+    # クラスタリング数の選択
+    st.session_state.num_clusters = st.slider("クラスタ数を選択してください", 2, 10, 5)
     
     # クラスタリングと3次元プロットボタン
     if st.session_state.embeddings is not None:
@@ -94,7 +99,7 @@ if uploaded_file:
     if st.session_state.embeddings is not None and st.button('感情分析を実行'):
         try:
             analyzer = SentimentIntensityAnalyzer()
-            st.session_state.df['sentiment_score'] = st.session_state.df[review_column].astype(str).apply(lambda x: analyzer.polarity_scores(x)['compound'] * 5)
+            st.session_state.df['sentiment_score'] = st.session_state.df[review_column].astype(str).apply(lambda x: analyzer.polarity_scores(x)['compound'])
             st.session_state.df['sentiment'] = st.session_state.df['sentiment_score'].apply(lambda x: 'positive' if x > 0 else 'negative')
             
             st.write("Sentiment Analysis結果：")
