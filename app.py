@@ -43,8 +43,8 @@ if uploaded_file:
 
     embeddings = None
 
-    # 埋め込みベクトルとクラスタリングボタン
-    if st.button('埋め込みベクトルを生成してクラスタリングを実行'):
+    # 埋め込みベクトル生成ボタン
+    if st.button('埋め込みベクトルを生成'):
         try:
             with st.spinner('埋め込みベクトルを生成中...'):
                 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
@@ -52,8 +52,17 @@ if uploaded_file:
             
             st.success('埋め込みベクトルの生成が完了しました！')
 
-            # クラスタリングを実行
+            # クラスタリング数の選択
             num_clusters = st.slider("クラスタ数を選択してください", 2, 10, 5)
+        
+        except Exception as e:
+            st.error("埋め込みベクトルの生成に失敗しました。")
+            st.error(str(e))
+    
+    # クラスタリングと3次元プロットボタン
+    if embeddings is not None and st.button('クラスタリングと3次元プロットを実行'):
+        try:
+            # クラスタリングを実行
             kmeans = KMeans(n_clusters=num_clusters, random_state=42)
             df['cluster'] = kmeans.fit_predict(embeddings)
             
@@ -65,7 +74,7 @@ if uploaded_file:
             df['pca_three'] = pca_result[:, 2]
             
             # クラスタの色を指定
-            color_sequence = ['red', 'blue', 'green']
+            color_sequence = px.colors.qualitative.T10
             fig = px.scatter_3d(
                 df, x='pca_one', y='pca_two', z='pca_three',
                 color='cluster', hover_data=[review_column],
@@ -74,7 +83,7 @@ if uploaded_file:
             st.plotly_chart(fig, use_container_width=True)
         
         except Exception as e:
-            st.error("選択いただいた列は分析不可です。")
+            st.error("クラスタリングとプロットに失敗しました。")
             st.error(str(e))
     
     # 感情分析ボタン
