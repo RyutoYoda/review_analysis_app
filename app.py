@@ -7,7 +7,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import plotly.express as px
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from collections import Counter
+import time
 
 # アプリの設定
 st.set_page_config(page_title="Review Analysis App", page_icon="📊")
@@ -74,15 +74,6 @@ if uploaded_file:
                 color_discrete_sequence=color_sequence[:num_clusters]
             )
             st.plotly_chart(fig, use_container_width=True)
-
-            # 頻出単語ランキング
-            word_list = ' '.join(df[review_column].dropna().astype(str).tolist()).split()
-            word_freq = Counter(word_list)
-            most_common_words = word_freq.most_common(20)
-            words, counts = zip(*most_common_words)
-            
-            fig = px.bar(x=words, y=counts, labels={'x': '単語', 'y': '出現回数'}, title="頻出単語ランキング")
-            st.plotly_chart(fig, use_container_width=True)
         
         except Exception as e:
             st.error("選択いただいた列は分析不可です。")
@@ -92,7 +83,7 @@ if uploaded_file:
     if embeddings is not None and st.button('感情分析を実行'):
         try:
             analyzer = SentimentIntensityAnalyzer()
-            df['sentiment_score'] = df[review_column].apply(lambda x: analyzer.polarity_scores(x)['compound'] * 5)
+            df['sentiment_score'] = df[review_column].astype(str).apply(lambda x: analyzer.polarity_scores(x)['compound'] * 5)
             df['sentiment'] = df['sentiment_score'].apply(lambda x: 'positive' if x > 0 else 'negative')
             
             st.write("Sentiment Analysis結果：")
