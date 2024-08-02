@@ -129,20 +129,20 @@ if uploaded_file:
             st.error("感情分析中にエラーが発生しました。")
             st.error(str(e))
 
-    # データをダウンロードするためのリンクを作成
-    if st.session_state.embeddings is not None and st.button('データをCSVとしてダウンロード'):
-        try:
-            def convert_df_to_csv(df):
-                return df.to_csv(index=False).encode('utf-8')
+# データをダウンロードするためのリンクを作成
+if st.session_state.embeddings is not None and st.session_state.df is not None:
+    try:
+        def convert_df_to_csv(df):
+            return df.to_csv(index=False).encode('utf-8')
 
-            csv = convert_df_to_csv(st.session_state.df)
-            st.download_button(
-                label="データをCSVとしてダウンロード",
-                data=csv,
-                file_name='review_analysis_result.csv',
-                mime='text/csv',
-            )
-        
-        except Exception as e:
-            st.error("データのダウンロード中にエラーが発生しました。")
-            st.error(str(e))
+        csv = convert_df_to_csv(st.session_state.df)
+        st.download_button(
+            label="データをCSVとしてダウンロード",
+            data=csv,
+            file_name='review_analysis_result.csv',
+            mime='text/csv',
+        )
+    
+    except Exception as e:
+        st.error("データのダウンロード中にエラーが発生しました。")
+        st.error(str(e))
