@@ -46,8 +46,6 @@ if uploaded_file:
                 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
                 embeddings = model.encode(df[review_column].tolist())
             
-            st.success('埋め込みベクトルの生成が完了しました！')
-
             # クラスタリングを実行
             num_clusters = st.slider("クラスタ数を選択してください", 2, 10, 5)
             kmeans = KMeans(n_clusters=num_clusters, random_state=42)
@@ -68,6 +66,17 @@ if uploaded_file:
                 color_discrete_sequence=color_sequence[:num_clusters]
             )
             st.plotly_chart(fig, use_container_width=True)
+
+            st.success('埋め込みベクトルの生成が完了しました！')
+
+            # 頻出単語ランキング
+            word_list = ' '.join(df[review_column].tolist()).split()
+            word_freq = Counter(word_list)
+            most_common_words = word_freq.most_common(20)
+            words, counts = zip(*most_common_words)
+            
+            fig = px.bar(x=words, y=counts, labels={'x': '単語', 'y': '出現回数'}, title="頻出単語ランキング")
+            st.plotly_chart(fig, use_container_width=True)
         
         except Exception as e:
             st.error("選択いただいた列は分析不可です。")
@@ -86,24 +95,13 @@ if uploaded_file:
             # ベクトル数値を列として追加
             for i in range(embeddings.shape[1]):
                 df[f'vector_{i}'] = embeddings[:, i]
+            
+            # 追加した列を表示
+            st.write("更新されたデータフレーム：")
+            st.write(df)
         
         except Exception as e:
             st.error("感情分析中にエラーが発生しました。")
-            st.error(str(e))
-    
-    # 頻出単語ランキングボタン
-    if st.button('頻出単語ランキングを表示'):
-        try:
-            word_list = ' '.join(df[review_column].tolist()).split()
-            word_freq = Counter(word_list)
-            most_common_words = word_freq.most_common(20)
-            words, counts = zip(*most_common_words)
-            
-            fig = px.bar(x=words, y=counts, labels={'x': '単語', 'y': '出現回数'}, title="頻出単語ランキング")
-            st.plotly_chart(fig, use_container_width=True)
-        
-        except Exception as e:
-            st.error("頻出単語ランキングの表示中にエラーが発生しました。")
             st.error(str(e))
 
     # データをダウンロードするためのリンクを作成
