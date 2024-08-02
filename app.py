@@ -1,5 +1,4 @@
 import streamlit as st
-import faiss
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
@@ -7,7 +6,6 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import plotly.express as px
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-import time
 
 # アプリの設定
 st.set_page_config(page_title="Review Analysis App", page_icon="📊")
@@ -50,7 +48,7 @@ if uploaded_file:
         try:
             with st.spinner('埋め込みベクトルを生成中...'):
                 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-                embeddings = model.encode(df[review_column].tolist())
+                embeddings = model.encode(df[review_column].astype(str).tolist())
             
             st.success('埋め込みベクトルの生成が完了しました！')
 
