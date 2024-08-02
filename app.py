@@ -39,6 +39,8 @@ if uploaded_file:
     # 口コミが含まれている列を選択
     review_column = st.selectbox("口コミが含まれている列を選択してください", df.columns)
     
+    embeddings = None
+
     # 埋め込みベクトルとクラスタリングボタン
     if st.button('埋め込みベクトルを生成してクラスタリングを実行'):
         try:
@@ -46,6 +48,8 @@ if uploaded_file:
                 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
                 embeddings = model.encode(df[review_column].tolist())
             
+            st.success('埋め込みベクトルの生成が完了しました！')
+
             # クラスタリングを実行
             num_clusters = st.slider("クラスタ数を選択してください", 2, 10, 5)
             kmeans = KMeans(n_clusters=num_clusters, random_state=42)
@@ -67,8 +71,6 @@ if uploaded_file:
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            st.success('埋め込みベクトルの生成が完了しました！')
-
             # 頻出単語ランキング
             word_list = ' '.join(df[review_column].tolist()).split()
             word_freq = Counter(word_list)
@@ -83,7 +85,7 @@ if uploaded_file:
             st.error(str(e))
     
     # 感情分析ボタン
-    if st.button('感情分析を実行'):
+    if embeddings is not None and st.button('感情分析を実行'):
         try:
             analyzer = SentimentIntensityAnalyzer()
             df['sentiment_score'] = df[review_column].apply(lambda x: analyzer.polarity_scores(x)['compound'] * 5)
