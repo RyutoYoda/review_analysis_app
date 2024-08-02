@@ -6,6 +6,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import plotly.express as px
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import re
 
 # アプリの設定
 st.set_page_config(page_title="Review Analysis App", page_icon="📊")
@@ -22,6 +23,14 @@ body {
 # Streamlitアプリのタイトル
 st.title('Review Analysis App📊')
 
+# テキストの前処理関数
+def preprocess_text(text):
+    text = text.lower()  # 小文字に変換
+    text = re.sub(r'\d+', '', text)  # 数字を削除
+    text = re.sub(r'\s+', ' ', text)  # 不要な空白を削除
+    text = re.sub(r'[^\w\s]', '', text)  # 特殊文字を削除
+    return text
+
 # ファイルアップロード
 uploaded_file = st.file_uploader("ファイルをアップロードしてください", type=["csv", "xlsx"])
 
@@ -34,9 +43,6 @@ if 'df' not in st.session_state:
 
 if 'num_clusters' not in st.session_state:
     st.session_state.num_clusters = 5
-
-if 'pca_result' not in st.session_state:
-    st.session_state.pca_result = None
 
 if uploaded_file:
     # ファイルをデータフレームとして読み込む
@@ -53,6 +59,9 @@ if uploaded_file:
     # レビュー列以外を切り落とし、レビューIDを追加
     st.session_state.df = df[[review_column]].dropna()
     st.session_state.df['review_id'] = st.session_state.df.index
+
+    # テキストの前処理
+    st.session_state.df[review_column] = st.session_state.df[review_column].apply(preprocess_text)
 
     # 埋め込みベクトル生成ボタン
     if st.button('埋め込みベクトルを生成'):
@@ -71,35 +80,33 @@ if uploaded_file:
     st.session_state.num_clusters = st.slider("クラスタ数を選択してください", 2, 10, 5)
     
     # クラスタリングと3次元プロットボタン
-    if st.session_state.embeddings is not None and st.button('クラスタリングと3次元プロットを実行'):
-        try:
-            # クラスタリングを実行
-            kmeans = KMeans(n_clusters=st.session_state.num_clusters, random_state=42)
-            st.session_state.df['cluster'] = kmeans.fit_predict(st.session_state.embeddings)
+    if st.session_state.embeddings is not None:
+        if st.button('クラスタリングと3次元プロットを実行'):
+            try:
+                # クラスタリングを実行
+                kmeans = KMeans(n_clusters=st.session_state.num_clusters, random_state=42)
+                st.session_state.df['cluster'] = kmeans.fit_predict(st.session_state.embeddings)
+                
+                # PCAを使用して3次元に可視化
+                pca = PCA(n_components=3)
+                pca_result = pca.fit_transform(st.session_state.embeddings)
+                st.session_state.df['pca_one'] = pca_result[:, 0]
+                st.session_state.df['pca_two'] = pca_result[:, 1]
+                st.session_state.df['pca_three'] = pca_result[:, 2]
+                
+                # クラスタの色を指定
+                color_sequence = px.colors.qualitative.T10
+                fig = px.scatter_3d(
+                    st.session_state.df, x='pca_one', y='pca_two', z='pca_three',
+                    color='cluster', hover_data=[review_column],
+                    color_discrete_sequence=color_sequence[:st.session_state.num_clusters]
+                )
+                st.session_state.fig = fig
+                st.plotly_chart(st.session_state.fig, use_container_width=True)
             
-            # PCAを使用して3次元に可視化
-            st.session_state.pca_result = PCA(n_components=3).fit_transform(st.session_state.embeddings)
-            st.session_state.df['pca_one'] = st.session_state.pca_result[:, 0]
-            st.session_state.df['pca_two'] = st.session_state.pca_result[:, 1]
-            st.session_state.df['pca_three'] = st.session_state.pca_result[:, 2]
-            
-            # クラスタの色を指定
-            color_sequence = px.colors.qualitative.T10
-            fig = px.scatter_3d(
-                st.session_state.df, x='pca_one', y='pca_two', z='pca_three',
-                color='cluster', hover_data=[review_column],
-                color_discrete_sequence=color_sequence[:st.session_state.num_clusters]
-            )
-            st.session_state.fig = fig
-            st.plotly_chart(st.session_state.fig, use_container_width=True)
-        
-        except Exception as e:
-            st.error("クラスタリングとプロットに失敗しました。")
-            st.error(str(e))
-    
-    # 3次元プロットの再表示
-    if st.session_state.pca_result is not None:
-        st.plotly_chart(st.session_state.fig, use_container_width=True)
+            except Exception as e:
+                st.error("クラスタリングとプロットに失敗しました。")
+                st.error(str(e))
     
     # 感情分析ボタン
     if st.session_state.embeddings is not None and st.button('感情分析を実行'):
@@ -140,4 +147,3 @@ if uploaded_file:
         except Exception as e:
             st.error("データのダウンロード中にエラーが発生しました。")
             st.error(str(e))
-
