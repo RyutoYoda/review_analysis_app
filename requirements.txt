@@ -1,8 +1,6 @@
 streamlit
-faiss-cpu
-numpy
-pandas
-plotly
-scikit-learn
 sentence-transformers
-vaderSentiment
+scikit-learn
+plotly
+snownlp
+pandas
