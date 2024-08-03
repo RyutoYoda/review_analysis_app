@@ -167,7 +167,9 @@ if uploaded_file:
                 st.write("更新されたデータフレーム：")
                 st.write(st.session_state.df)
                 
-                # プロットを再表示
+                # プロットを再表示（ポジティブを赤、ネガティブを青）
+                color_map = {'positive': 'red', 'negative': 'blue'}
+                st.session_state.fig.update_traces(marker=dict(color=st.session_state.df['sentiment'].map(color_map)))
                 st.plotly_chart(st.session_state.fig, use_container_width=True)
             
             except Exception as e:
