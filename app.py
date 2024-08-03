@@ -16,19 +16,51 @@ st.markdown("""
 <style>
 body {
     font-family: 'Helvetica Neue', sans-serif;
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+header, footer {
+    visibility: hidden;
 }
 .main {
-    background-color: #f0f2f6;
-    padding: 2rem;
+    background-color: #1e1e1e;
 }
-.sidebar .sidebar-content {
-    background-color: #f0f2f6;
+.big-font {
+    font-size: 36px !important;
+    font-weight: bold;
+    color: #61dafb;
+}
+.label-font {
+    font-size: 20px !important;
+    color: #61dafb;
+}
+.stButton>button {
+    background-color: #61dafb !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: 10px !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+}
+.stTextInput>div>div>input {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border: 1px solid #61dafb !important;
+}
+.stSelectbox>div>div>div {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border: 1px solid #61dafb !important;
+}
+.stSlider>div>div>div>div {
+    background-color: #61dafb !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # Streamlitアプリのタイトル
-st.title('Review Analysis App📊')
+st.markdown('<div class="big-font">Review Analysis App📊</div>', unsafe_allow_html=True)
 
 # テキストの前処理関数
 def preprocess_text(text):
@@ -39,7 +71,7 @@ def preprocess_text(text):
     return text
 
 # ファイルアップロード
-uploaded_file = st.file_uploader("ファイルをアップロードしてください", type=["csv", "xlsx"])
+uploaded_file = st.file_uploader("ファイルをアップロードしてください", type=["csv", "xlsx"], label_visibility='visible', key="fileUploader")
 
 # セッション状態を初期化
 if 'embeddings' not in st.session_state:
@@ -87,7 +119,7 @@ if uploaded_file:
             st.error(str(e))
 
     # クラスタリング数の選択
-    st.session_state.num_clusters = st.slider("クラスタ数を選択してください", 2, 10, 5)
+    st.session_state.num_clusters = st.slider("クラスタ数を選択してください", 2, 10, 5, label_visibility='visible')
     
     # クラスタリングと3次元プロットボタン
     if st.session_state.embeddings is not None:
