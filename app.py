@@ -17,6 +17,13 @@ st.markdown("""
 body {
     font-family: 'Helvetica Neue', sans-serif;
 }
+.main {
+    background-color: #f0f2f6;
+    padding: 2rem;
+}
+.sidebar .sidebar-content {
+    background-color: #f0f2f6;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -28,7 +35,7 @@ def preprocess_text(text):
     text = text.lower()  # 小文字に変換
     text = re.sub(r'\d+', '', text)  # 数字を削除
     text = re.sub(r'\s+', ' ', text)  # 不要な空白を削除
-    text = re.sub(r'[^\w\s]', '', text)  # 特殊文字を削除
+    text = re.sub(r'[^\w\sぁ-んァ-ン一-龥]', '', text)  # 特殊文字を削除、漢字、ひらがな、カタカナを含む
     return text
 
 # ファイルアップロード
@@ -43,6 +50,9 @@ if 'df' not in st.session_state:
 
 if 'num_clusters' not in st.session_state:
     st.session_state.num_clusters = 5
+
+if 'fig' not in st.session_state:
+    st.session_state.fig = None
 
 if uploaded_file:
     # ファイルをデータフレームとして読み込む
@@ -96,12 +106,11 @@ if uploaded_file:
                 
                 # クラスタの色を指定
                 color_sequence = px.colors.qualitative.T10
-                fig = px.scatter_3d(
+                st.session_state.fig = px.scatter_3d(
                     st.session_state.df, x='pca_one', y='pca_two', z='pca_three',
                     color='cluster', hover_data=[review_column],
                     color_discrete_sequence=color_sequence[:st.session_state.num_clusters]
                 )
-                st.session_state.fig = fig
                 st.plotly_chart(st.session_state.fig, use_container_width=True)
             
             except Exception as e:
@@ -109,25 +118,29 @@ if uploaded_file:
                 st.error(str(e))
     
     # 感情分析ボタン
-    if st.session_state.embeddings is not None and st.button('感情分析を実行'):
-        try:
-            st.session_state.df['sentiment_score'] = st.session_state.df[review_column].astype(str).apply(lambda x: 2 * SnowNLP(x).sentiments - 1)
-            st.session_state.df['sentiment'] = st.session_state.df['sentiment_score'].apply(lambda x: 'positive' if x > 0 else 'negative')
+    if st.session_state.embeddings is not None:
+        if st.button('感情分析を実行'):
+            try:
+                st.session_state.df['sentiment_score'] = st.session_state.df[review_column].astype(str).apply(lambda x: 2 * SnowNLP(x).sentiments - 1)
+                st.session_state.df['sentiment'] = st.session_state.df['sentiment_score'].apply(lambda x: 'positive' if x > 0 else 'negative')
+                
+                st.write("Sentiment Analysis結果：")
+                st.write(st.session_state.df[[review_column, 'sentiment', 'sentiment_score']])
+                
+                # ベクトル数値を列として追加
+                for i in range(st.session_state.embeddings.shape[1]):
+                    st.session_state.df[f'vector_{i}'] = st.session_state.embeddings[:, i]
+                
+                # 追加した列を表示
+                st.write("更新されたデータフレーム：")
+                st.write(st.session_state.df)
+                
+                # プロットを再表示
+                st.plotly_chart(st.session_state.fig, use_container_width=True)
             
-            st.write("Sentiment Analysis結果：")
-            st.write(st.session_state.df[[review_column, 'sentiment', 'sentiment_score']])
-            
-            # ベクトル数値を列として追加
-            for i in range(st.session_state.embeddings.shape[1]):
-                st.session_state.df[f'vector_{i}'] = st.session_state.embeddings[:, i]
-            
-            # 追加した列を表示
-            st.write("更新されたデータフレーム：")
-            st.write(st.session_state.df)
-        
-        except Exception as e:
-            st.error("感情分析中にエラーが発生しました。")
-            st.error(str(e))
+            except Exception as e:
+                st.error("感情分析中にエラーが発生しました。")
+                st.error(str(e))
 
 # データをダウンロードするためのリンクを作成
 if st.session_state.embeddings is not None and st.session_state.df is not None:
