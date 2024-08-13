@@ -90,6 +90,23 @@ def preprocess_text(text):
     text = re.sub(r'[^\w\sぁ-んァ-ン一-龥]', '', text)  # 特殊文字を削除、漢字、ひらがな、カタカナを含む
     return text
 
+# ネガティブワードとポジティブワードのリストを定義
+NEGATIVE_WORDS = ["最悪", "ひどい", "不満", "失敗", "問題"]
+POSITIVE_WORDS = ["最高", "素晴らしい", "満足", "成功", "良い"]
+
+# 単語ベースで感情分析を強化する関数
+def enhanced_sentiment_analysis(text):
+    score = 0
+    for word in NEGATIVE_WORDS:
+        if word in text:
+            score -= 1
+    for word in POSITIVE_WORDS:
+        if word in text:
+            score += 1
+    snow_score = SnowNLP(text).sentiments
+    combined_score = 2 * snow_score - 1 + score  # SnowNLPのスコアを調整
+    return 'positive' if combined_score > 0 else 'negative', combined_score
+
 # ファイルアップロード
 uploaded_file = st.file_uploader("ファイルをアップロードしてください", type=["csv", "xlsx"], label_visibility='visible', key="fileUploader")
 
@@ -173,8 +190,7 @@ if uploaded_file:
     if st.session_state.embeddings is not None:
         if st.button('感情分析を実行'):
             try:
-                st.session_state.df['sentiment_score'] = st.session_state.df[review_column].astype(str).apply(lambda x: 2 * SnowNLP(x).sentiments - 1)
-                st.session_state.df['sentiment'] = st.session_state.df['sentiment_score'].apply(lambda x: 'positive' if x > 0 else 'negative')
+                st.session_state.df['sentiment'], st.session_state.df['sentiment_score'] = zip(*st.session_state.df[review_column].astype(str).apply(enhanced_sentiment_analysis))
                 
                 st.write("Sentiment Analysis結果：")
                 st.write(st.session_state.df[[review_column, 'sentiment', 'sentiment_score']])
