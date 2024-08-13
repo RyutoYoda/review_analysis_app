@@ -205,9 +205,13 @@ if uploaded_file:
                 st.write("更新されたデータフレーム：")
                 st.write(st.session_state.df)
                 
-                # プロットを再表示（ポジティブを赤、ネガティブを青）
+                # プロットを再作成（ポジティブを赤、ネガティブを青）
                 color_map = {'positive': 'red', 'negative': 'blue'}
-                st.session_state.fig.update_traces(marker=dict(color=st.session_state.df['sentiment'].map(color_map)))
+                st.session_state.fig = px.scatter_3d(
+                    st.session_state.df, x='pca_one', y='pca_two', z='pca_three',
+                    color='sentiment', hover_data=[review_column],
+                    color_discrete_map=color_map
+                )
                 st.plotly_chart(st.session_state.fig, use_container_width=True)
             
             except Exception as e:
@@ -231,3 +235,4 @@ if uploaded_file:
         except Exception as e:
             st.error("データのダウンロード中にエラーが発生しました。")
             st.error(str(e))
+
