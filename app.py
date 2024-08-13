@@ -104,8 +104,9 @@ def enhanced_sentiment_analysis(text):
         if word in text:
             score += 1
     snow_score = SnowNLP(text).sentiments
-    combined_score = 2 * snow_score - 1 + score  # SnowNLPのスコアを調整
-    return 'positive' if combined_score > 0 else 'negative', combined_score
+    combined_score = (snow_score + score) / 2  # 正規化とスケーリング
+    scaled_score = (combined_score * 2) - 1  # -1から1の範囲にスケーリング
+    return 'positive' if scaled_score > 0 else 'negative', scaled_score
 
 # ファイルアップロード
 uploaded_file = st.file_uploader("ファイルをアップロードしてください", type=["csv", "xlsx"], label_visibility='visible', key="fileUploader")
