@@ -91,8 +91,8 @@ def preprocess_text(text):
     return text
 
 # ネガティブワードとポジティブワードのリストを定義
-NEGATIVE_WORDS = ["最悪", "ひどい", "不満", "失敗", "問題"]
-POSITIVE_WORDS = ["最高", "素晴らしい", "満足", "成功", "良い"]
+NEGATIVE_WORDS = ["最悪", "ひどい", "不満", "失敗", "問題","できません","悪く"]
+POSITIVE_WORDS = ["最高", "素晴らしい", "満足", "成功", "良い","入"]
 
 # 単語ベースで感情分析を強化する関数
 def enhanced_sentiment_analysis(text):
