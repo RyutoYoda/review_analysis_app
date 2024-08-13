@@ -94,7 +94,6 @@ def preprocess_text(text):
 NEGATIVE_WORDS = ["最悪", "ひどい", "不満", "失敗", "問題","できません","悪く"]
 POSITIVE_WORDS = ["最高", "素晴らしい", "満足", "成功", "良い","入"]
 
-
 # 単語ベースで感情分析を強化する関数
 def enhanced_sentiment_analysis(text):
     score = 0
@@ -201,9 +200,12 @@ if uploaded_file:
                 for i in range(st.session_state.embeddings.shape[1]):
                     st.session_state.df[f'vector_{i}'] = st.session_state.embeddings[:, i]
                 
-                # 追加した列を表示
-                st.write("更新されたデータフレーム：")
-                st.write(st.session_state.df)
+                # PCAを使用して3次元に可視化（再計算）
+                pca = PCA(n_components=3)
+                pca_result = pca.fit_transform(st.session_state.embeddings)
+                st.session_state.df['pca_one'] = pca_result[:, 0]
+                st.session_state.df['pca_two'] = pca_result[:, 1]
+                st.session_state.df['pca_three'] = pca_result[:, 2]
                 
                 # プロットを再作成（ポジティブを赤、ネガティブを青）
                 color_map = {'positive': 'red', 'negative': 'blue'}
