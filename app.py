@@ -54,7 +54,7 @@ header, footer {
     border: 1px solid #61dafb !important;
 }
 .stSlider>div>div>div>div {
-    background-color: #61dafb !important;
+    background-color: #61dafb !重要です;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -94,6 +94,7 @@ def preprocess_text(text):
 NEGATIVE_WORDS = ["最悪", "ひどい", "不満", "失敗", "問題","できません","悪く"]
 POSITIVE_WORDS = ["最高", "素晴らしい", "満足", "成功", "良い","入"]
 
+
 # 単語ベースで感情分析を強化する関数
 def enhanced_sentiment_analysis(text):
     score = 0
@@ -107,7 +108,6 @@ def enhanced_sentiment_analysis(text):
     combined_score = (snow_score * 2) - 1 + (score / max(len(NEGATIVE_WORDS), len(POSITIVE_WORDS)))  # 正規化とスケーリング
     scaled_score = np.clip(combined_score, -1, 1)  # スコアを-1から1の範囲にクリッピング
     return 'positive' if scaled_score > 0 else 'negative', scaled_score
-
 
 # ファイルアップロード
 uploaded_file = st.file_uploader("ファイルをアップロードしてください", type=["csv", "xlsx"], label_visibility='visible', key="fileUploader")
@@ -213,21 +213,21 @@ if uploaded_file:
             except Exception as e:
                 st.error("感情分析中にエラーが発生しました。")
                 st.error(str(e))
-
-# データをダウンロードするためのリンクを作成
-if st.session_state.embeddings is not None and st.session_state.df is not None:
-    try:
-        def convert_df_to_csv(df):
-            return df.to_csv(index=False).encode('utf-8')
-
-        csv = convert_df_to_csv(st.session_state.df)
-        st.download_button(
-            label="データをCSVとしてダウンロード",
-            data=csv,
-            file_name='review_analysis_result.csv',
-            mime='text/csv',
-        )
     
-    except Exception as e:
-        st.error("データのダウンロード中にエラーが発生しました。")
-        st.error(str(e))
+    # データをダウンロードするためのリンクを作成
+    if st.session_state.embeddings is not None and st.session_state.df is not None:
+        try:
+            def convert_df_to_csv(df):
+                return df.to_csv(index=False).encode('utf-8')
+
+            csv = convert_df_to_csv(st.session_state.df)
+            st.download_button(
+                label="データをCSVとしてダウンロード",
+                data=csv,
+                file_name='review_analysis_result.csv',
+                mime='text/csv',
+            )
+        
+        except Exception as e:
+            st.error("データのダウンロード中にエラーが発生しました。")
+            st.error(str(e))
