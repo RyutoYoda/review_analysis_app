@@ -9,7 +9,7 @@ from snownlp import SnowNLP
 import re
 
 # アプリの設定
-st.set_page_config(page_title="Review Analysis App", page_icon="📊")
+st.set_page_config(page_title="Review Analysis App", page_icon="📈")
 
 # スタイル設定
 st.markdown("""
@@ -60,7 +60,7 @@ header, footer {
 """, unsafe_allow_html=True)
 
 # Streamlitアプリのタイトル
-st.markdown('<div class="big-font">Review Analysis App📊</div>', unsafe_allow_html=True)
+st.markdown('<div class="big-font">Review Analysis App📈</div>', unsafe_allow_html=True)
 
 # トグルで説明と使い方を表示
 with st.expander("アプリケーションの説明と使い方"):
