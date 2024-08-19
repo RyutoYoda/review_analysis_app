@@ -42,17 +42,17 @@ header, footer {
     padding: 10px 20px !important;
     border-radius: 10px !important;
     font-size: 18px !important;
-    font-weight: bold !重要です;
+    font-weight: bold !important;
 }
 .stTextInput>div>div>input {
-    background-color: #333333 !重要です;
-    color: #ffffff !重要です;
-    border: 1px solid #61dafb !重要です;
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border: 1px solid #61dafb !important;
 }
 .stSelectbox>div>div>div {
-    background-color: #333333 !重要です;
-    color: #ffffff !重要です;
-    border: 1px solid #61dafb !重要です;
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border: 1px solid #61dafb !important;
 }
 .stSlider>div>div>div>div {
     background-color: #61dafb !重要です;
@@ -92,8 +92,8 @@ def preprocess_text(text):
     return text
 
 # 感情分析モデルの準備
-tokenizer = BertTokenizer.from_pretrained("cl-tohoku/bert-base-japanese-sentiment")
-model = BertForSequenceClassification.from_pretrained("cl-tohoku/bert-base-japanese-sentiment")
+tokenizer = BertTokenizer.from_pretrained("cl-tohoku/bert-base-japanese")
+model = BertForSequenceClassification.from_pretrained("cl-tohoku/bert-base-japanese", num_labels=2)
 
 def analyze_sentiment(text):
     inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True, padding=True)
