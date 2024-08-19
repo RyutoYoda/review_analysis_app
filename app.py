@@ -5,9 +5,8 @@ from sentence_transformers import SentenceTransformer
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 import plotly.express as px
+from snownlp import SnowNLP
 import re
-from transformers import BertTokenizer, BertForSequenceClassification
-import torch
 
 # アプリの設定
 st.set_page_config(page_title="Review Analysis App", page_icon="📈")
@@ -91,18 +90,23 @@ def preprocess_text(text):
     text = re.sub(r'[^\w\sぁ-んァ-ン一-龥]', '', text)  # 特殊文字を削除、漢字、ひらがな、カタカナを含む
     return text
 
-# 感情分析モデルの準備
-tokenizer = BertTokenizer.from_pretrained("cl-tohoku/bert-base-japanese")
-model = BertForSequenceClassification.from_pretrained("cl-tohoku/bert-base-japanese", num_labels=2)
+# ネガティブワードとポジティブワードのリストを定義
+NEGATIVE_WORDS = ["最悪", "ひどい", "不満", "失敗", "問題","できません","悪く","つらい","悲しい","悪い"]
+POSITIVE_WORDS = ["最高", "素晴らしい", "満足", "成功", "良い","入","長持ち","便利","勧めたい","嬉しい","楽しい","問題ありません","問題ない","友人にも"]
 
-def analyze_sentiment(text):
-    inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True, padding=True)
-    outputs = model(**inputs)
-    scores = torch.nn.functional.softmax(outputs.logits, dim=-1)
-    negative_score = scores[0][0].item()
-    positive_score = scores[0][1].item()
-    sentiment_score = positive_score - negative_score  # -1 から 1 の範囲にスケーリング
-    return 'positive' if sentiment_score > 0 else 'negative', sentiment_score
+# 単語ベースで感情分析を強化する関数
+def enhanced_sentiment_analysis(text):
+    score = 0
+    for word in NEGATIVE_WORDS:
+        if word in text:
+            score -= 1
+    for word in POSITIVE_WORDS:
+        if word in text:
+            score += 1
+    snow_score = SnowNLP(text).sentiments
+    combined_score = (snow_score * 2) - 1 + (score / max(len(NEGATIVE_WORDS), len(POSITIVE_WORDS)))  # 正規化とスケーリング
+    scaled_score = np.clip(combined_score, -1, 1)  # スコアを-1から1の範囲にクリッピング
+    return 'positive' if scaled_score > 0 else 'negative', scaled_score
 
 # ファイルアップロード
 uploaded_file = st.file_uploader("ファイルをアップロードしてください", type=["csv", "xlsx"], label_visibility='visible', key="fileUploader")
@@ -187,7 +191,7 @@ if uploaded_file:
     if st.session_state.embeddings is not None:
         if st.button('感情分析を実行'):
             try:
-                st.session_state.df['sentiment'], st.session_state.df['sentiment_score'] = zip(*st.session_state.df[review_column].astype(str).apply(analyze_sentiment))
+                st.session_state.df['sentiment'], st.session_state.df['sentiment_score'] = zip(*st.session_state.df[review_column].astype(str).apply(enhanced_sentiment_analysis))
                 
                 st.write("Sentiment Analysis結果：")
                 st.write(st.session_state.df[[review_column, 'sentiment', 'sentiment_score']])
