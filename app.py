@@ -92,8 +92,9 @@ def preprocess_text(text):
     return text
 
 # 感情分析モデルの準備
-tokenizer = BertTokenizer.from_pretrained("cl-tohoku/bert-base-japanese")
-model = BertForSequenceClassification.from_pretrained("cl-tohoku/bert-base-japanese", num_labels=2)
+tokenizer = BertTokenizer.from_pretrained("cl-tohoku/bert-base-japanese-sentiment")
+model = BertForSequenceClassification.from_pretrained("cl-tohoku/bert-base-japanese-sentiment")
+
 
 def analyze_sentiment(text):
     inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True, padding=True)
