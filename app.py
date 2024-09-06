@@ -8,8 +8,6 @@ from sklearn.decomposition import PCA
 import plotly.express as px
 from snownlp import SnowNLP
 import re
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
 
 # アプリの設定
 st.set_page_config(page_title="Review Analysis App", page_icon="📈")
@@ -74,7 +72,6 @@ with st.expander("アプリケーションの説明と使い方"):
     - クラスタリング（3次元プロットと2次元プロット）
     - 感情分析
     - 外れ値検出と可視化
-    - ワードクラウドの生成
 
     ### 使い方
     1. 口コミデータが含まれるCSVまたはExcelファイルをアップロードします。
@@ -84,8 +81,7 @@ with st.expander("アプリケーションの説明と使い方"):
     5. 「クラスタリングと3次元プロットを実行」ボタンをクリックします。
     6. 「感情分析を実行」ボタンをクリックします。
     7. 「外れ値検出と2次元可視化を実行」ボタンをクリックします。
-    8. ワードクラウドを生成し、重要なキーワードを視覚的に確認できます。
-    9. 必要に応じて、「データをCSVとしてダウンロード」ボタンをクリックして、結果をダウンロードします。
+    8. 必要に応じて、「データをCSVとしてダウンロード」ボタンをクリックして、結果をダウンロードします。
     """)
 
 # セッション状態を初期化
@@ -137,7 +133,6 @@ if uploaded_file:
                 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
                 st.session_state.embeddings = model.encode(st.session_state.df[review_column].astype(str).tolist())
             st.success('埋め込みベクトルの生成が完了しました！')
-            st.progress(100)  # 進捗バー
         except Exception as e:
             st.error("埋め込みベクトルの生成に失敗しました。")
             st.error(str(e))
@@ -241,22 +236,6 @@ if uploaded_file:
 
             except Exception as e:
                 st.error("外れ値検出と可視化中にエラーが発生しました。")
-                st.error(str(e))
-
-    # ワードクラウド生成
-    if st.session_state.df is not None:
-        if st.button("ワードクラウドを生成"):
-            try:
-                all_reviews = ' '.join(st.session_state.df[review_column])
-                wordcloud = WordCloud(width=800, height=400, background_color='black', colormap='Blues').generate(all_reviews)
-
-                fig, ax = plt.subplots()
-                ax.imshow(wordcloud, interpolation='bilinear')
-                ax.axis("off")
-                st.pyplot(fig)
-
-            except Exception as e:
-                st.error("ワードクラウド生成中にエラーが発生しました。")
                 st.error(str(e))
 
 # データダウンロードリンク
