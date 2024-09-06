@@ -1,4 +1,3 @@
-
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -144,5 +143,4 @@ if st.session_state.embeddings is not None:
         except Exception as e:
             st.error("外れ値検出と可視化中にエラーが発生しました。")
             st.error(str(e))
-
 
